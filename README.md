@@ -1,4 +1,4 @@
-# Learn Go
+# Learning Go
 
 ***IF YOU ARE TRYING TO LEARN GO, THIS REPO IS NOT FOR YOU!***
 
