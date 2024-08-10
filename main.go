@@ -19,70 +19,64 @@ func main() {
 		res.WriteHeader(200)
 	})
 
-	http.HandleFunc("GET /theme.css", getTheme)
+	http.HandleFunc("GET /theme.css", func(res http.ResponseWriter, req *http.Request) {
+		res.Header().Del("Content-Type")
+		res.Header().Add("Content-Type", "text/css")
+		var defaultTheme http.Cookie
+		defaultTheme.Name = "theme"
+		defaultTheme.Value = "dark-theme"
+		defaultTheme.SameSite = http.SameSiteNoneMode
+		defaultTheme.Secure = true
+		theme, getCookieErr := req.Cookie("theme")
+
+		if getCookieErr != nil {
+			if getCookieErr != http.ErrNoCookie {
+				log.Fatal(getCookieErr)
+			}
+
+			setCookie(res, defaultTheme)
+			http.ServeFile(res, req, "dark-theme.css")
+			return
+		}
+
+		if validateTheme(theme.Value) {
+			res.WriteHeader(200)
+			http.ServeFile(res, req, theme.Value+".css")
+			return
+		}
+
+		setCookie(res, defaultTheme)
+		res.WriteHeader(422)
+	})
+
+	http.HandleFunc("GET /dark-theme.css", getTheme("dark-theme"))
+	http.HandleFunc("GET /light-theme.css", getTheme("light-theme"))
+	http.HandleFunc("GET /hacker-theme.css", getTheme("hacker-theme"))
 
 	listen(PORT)
 }
 
-func getTheme(res http.ResponseWriter, req *http.Request) {
-	res.Header().Del("Content-Type")
-	res.Header().Add("Content-Type", "text/css")
+func getTheme(theme string) func(http.ResponseWriter, *http.Request) {
+	return func(res http.ResponseWriter, req *http.Request) {
+		res.Header().Del("Content-Type")
+		res.Header().Add("Content-Type", "text/css")
 
-	if req.URL.Query().Has("set-theme") {
-		if validateTheme(req.URL.Query().Get("set-theme")) {
-			var chosenTheme http.Cookie
-			chosenTheme.Name = "theme"
-			chosenTheme.Value = req.URL.Query().Get("set-theme")
-
-			setCookie(res, chosenTheme)
-
-			res.WriteHeader(200)
-			http.ServeFile(res, req, chosenTheme.Value+".css")
+		if req.URL.Query().Has("set-theme") {
+			var themeCookie http.Cookie
+			themeCookie.Name = "theme"
+			themeCookie.Value = theme
+			themeCookie.SameSite = http.SameSiteNoneMode
+			themeCookie.Secure = true
+			setCookie(res, themeCookie)
 			return
 		}
 
-		var defaultTheme http.Cookie
-		defaultTheme.Name = "theme"
-		defaultTheme.Value = "dark-theme"
-
-		setCookie(res, defaultTheme)
-		res.WriteHeader(422)
-		http.ServeFile(res, req, "dark-theme.css")
-		return
+		http.ServeFile(res, req, theme+".css")
 	}
-	theme, getCookieErr := req.Cookie("theme")
-
-	if getCookieErr != nil {
-		if getCookieErr != http.ErrNoCookie {
-			log.Fatal(getCookieErr)
-		}
-
-		var defaultTheme http.Cookie
-		defaultTheme.Name = "theme"
-		defaultTheme.Value = "dark-theme"
-
-		setCookie(res, defaultTheme)
-		http.ServeFile(res, req, "dark-theme.css")
-		return
-	}
-
-	if validateTheme(theme.Value) {
-		res.WriteHeader(200)
-		http.ServeFile(res, req, theme.Value+".css")
-		return
-	}
-
-	var defaultTheme http.Cookie
-	defaultTheme.Name = "theme"
-	defaultTheme.Value = "dark-theme"
-
-	setCookie(res, defaultTheme)
-	res.WriteHeader(422)
-	http.ServeFile(res, req, "dark-theme.css")
 }
 
 func validateTheme(theme string) bool {
-	var themes [2]string = [...]string{"dark-theme", "light-theme"}
+	var themes [3]string = [...]string{"dark-theme", "light-theme", "hacker-theme"}
 
 	for i := range themes {
 		if themes[i] == theme {

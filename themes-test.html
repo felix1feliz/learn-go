@@ -1,10 +1,32 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<link rel="stylesheet" type="text/css" href="theme.css">
-		<link rel="stylesheet" type="text/css" href="styles.css">
-	</head>
-	<body>
-		<h1>This is a test</h1>
-	</body>
+
+<head>
+	<link disabled rel="preload" type="text/css" as="style" href="dark-theme.css">
+	<link disabled rel="preload" type="text/css" as="style" href="light-theme.css">
+	<link disabled rel="preload" type="text/css" as="style" href="hacker-theme.css">
+	<link id="theme-link" rel="stylesheet" type="text/css" href="theme.css">
+	<link rel="stylesheet" type="text/css" href="styles.css">
+</head>
+
+<body>
+	<h1>Testing the themes</h1>
+	<button class="theme-button">Light theme</button>
+	<button class="theme-button">Dark theme</button>
+	<button class="theme-button">Hacker theme</button>
+	<script>
+		const THEMES = ["light-theme.css", "dark-theme.css", "hacker-theme.css"]
+		let buttons = document.getElementsByClassName("theme-button")
+
+		for (let i = 0; i < buttons.length; i++) {
+			buttons[i].addEventListener("click", e => {
+				e.preventDefault()
+				fetch(THEMES[i].concat("?set-theme"))
+				document.getElementById("theme-link").href = THEMES[i]
+			})
+		}
+
+	</script>
+</body>
+
 </html>
